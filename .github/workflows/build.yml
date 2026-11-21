@@ -1,10 +1,15 @@
 name: Build ShakeBlocker DEBs
 
 # ============================================================
-# 在 GitHub Actions 的 macOS runner 上自动编译两个 DEB：
+# 用 GitHub Actions 免费 ubuntu runner 自动编译两个 DEB：
 #   - rootful  (iOS 13-14, iphoneos-arm,   mobilesubstrate)
 #   - rootless (iOS 15-16, iphoneos-arm64, ellekit)
 # 两个包共用 Package Identifier，APT 按设备架构自动选包。
+#
+# 为什么用 Linux 而不是 macOS：
+#   macos-14(Apple Silicon) 是 10x 计费，免费账号无 macOS 分钟会 1 秒秒取消；
+#   macos-13 会长时间排队拿不到 runner。theos-action 让 ubuntu 也能编 Theos tweak，
+#   免费、额度充足、无需排队，是社区标准做法。
 #
 # 触发：push 到 main/master、打 v* 标签、PR、手动 workflow_dispatch
 # 产物：Actions 页面 Artifacts 下载；打标签时自动发 Release
@@ -20,7 +25,6 @@ on:
 permissions:
   contents: write   # 仅“打标签发 Release”需要；不需要可改成 read
 
-# 防止连续 push 时新 run 取消旧 run（github 默认会把同分支旧 run 标为 cancelled）
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: false
@@ -28,49 +32,24 @@ concurrency:
 jobs:
   build:
     name: Build rootful + rootless
-    # ⚠️ macos-14 (Apple Silicon) 属于 10x 计费，免费账号无额度会秒取消。
-    # macos-13 (Intel) 在部分免费账号下可用；若仍被取消，说明该账号无 macOS 分钟，
-    # 需改用 self-hosted macOS runner（见 README）或升级 GitHub 套餐。
-    runs-on: macos-13
-    timeout-minutes: 30
-    # 注意：GitHub Actions 没有 runner.home 这个上下文！用 shell 的 $HOME 代替。
-    env:
-      THEOS: /Users/runner/theos
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
 
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
 
+      # 一键装 Theos + 免费 Linux toolchain + iOS SDK + ldid（社区维护的 action）
+      - name: Install Theos (Linux toolchain + SDK)
+        uses: Randomblock1/theos-action@v1
+        with:
+          theos-dir: ${{ github.workspace }}/theos
+
       - name: Show toolchain
         run: |
-          echo "Xcode: $(xcode-select -p)"
-          clang --version | head -1
-
-      - name: Install Theos (recursive)
-        run: |
-          git clone --recursive --depth 1 https://github.com/theos/theos.git "$THEOS"
-          echo "THEOS=$THEOS" >> "$GITHUB_ENV"
-
-      - name: Install iOS SDK
-        run: |
-          # theos/sdks 内含多套 iPhoneOS*.sdk。若该源失效，把下面 URL 换成
-          # 你信任的 SDK 仓库（如 nicolas73/iOS-12.2-SDK 等），SDK 目录名须形如 iPhoneOS*.sdk
-          git clone --depth 1 https://github.com/theos/sdks.git "$THEOS/sdks" || true
-          # 兼容“仓库里放压缩包”的情况：见到 tar 包就解压到 sdks/
-          find "$THEOS/sdks" -maxdepth 2 -type f \( -name '*.tar.gz' -o -name '*.tar.xz' -o -name '*.tgz' \) \
-            | while read -r arc; do tar -xf "$arc" -C "$THEOS/sdks" 2>/dev/null || true; done
-          echo "---- installed SDKs ----"
+          echo "THEOS=$THEOS"
+          "$THEOS/bin/ldid" -v 2>&1 | head -3 || true
           ls -d "$THEOS/sdks"/*.sdk 2>/dev/null || true
-
-      - name: Install build deps (dpkg-deb, modern ldid)
-        run: |
-          # Theos 自带 dpkg-deb，但 brew 版兜底更稳
-          brew install dpkg || true
-          # rootless 需要支持 DER entitlements 的新版 ldid
-          brew install ldid || true
-          BREW_LDID="$(brew --prefix 2>/dev/null)/bin/ldid"
-          [ -x "$BREW_LDID" ] && cp -f "$BREW_LDID" "$THEOS/bin/ldid"
-          echo "ldid: $("$THEOS/bin/ldid" -v 2>&1 | head -2)"
 
       - name: Build rootful (iOS 13-14, iphoneos-arm)
         run: |
