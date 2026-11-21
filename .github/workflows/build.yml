@@ -26,8 +26,9 @@ jobs:
     # macos-14 = Apple Silicon，编译 arm64/arm64e 更顺手；如需 Intel 改成 macos-13
     runs-on: macos-14
     timeout-minutes: 30
+    # 注意：GitHub Actions 没有 runner.home 这个上下文！用 shell 的 $HOME 代替。
     env:
-      THEOS: ${{ runner.home }}/theos
+      THEOS: /Users/runner/theos
 
     steps:
       - name: Checkout repo
