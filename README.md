@@ -105,14 +105,19 @@ make SCHEME=rootless package
 自动装 Theos + Linux toolchain + iOS SDK + ldid，依次编两个 scheme，
 上传 DEB 为 Artifacts；打 `v*` 标签时自动发 Release。Linux 编 Theos tweak 是社区标准做法，不需要 Mac。
 
-> ⚠️ **runner 选择的坑（本小姐实测踩过）**：`macos-14`（Apple Silicon）属 10x 计费，
-> 免费账号没 macOS 分钟会在 **1 秒内秒取消**（job 连 step 都不跑、runner_id=0）；
-> `macos-13` 则长时间 queued 拿不到 runner。所以最终改用 `ubuntu-latest` + theos-action，
-> 免费、额度充足。若 ubuntu 也无故 pending/cancel（`billing/actions` 返回 404），
-> 说明该账号/组织层面限制了 Actions，退路：
-> 1. 在自己 Mac 上装 **self-hosted runner**（Settings → Actions → Runners → New self-hosted runner），
->    把 `runs-on: ubuntu-latest` 改成 `runs-on: self-hosted`；
-> 2. 升级 GitHub 套餐。
+> ⚠️ **runner 选择的坑（本小姐实测踩过）**：
+> - `macos-14`（Apple Silicon）属 **10x 计费**，免费账号无 macOS 分钟 → 1 秒秒取消（runner_id=0）；
+> - `macos-13` 已于 **2025-12-04 退役**（[官方公告](https://github.blog/changelog/2025-09-19-github-actions-macos-13-runner-image-is-closing-down/)），
+>   退役前有 brownout 时段临时失败，退役后 label 下架 → job 永久 queued。别再用它；
+> - 所以最终改用 `ubuntu-latest` + theos-action，免费、额度充足、连 Linux 都不挑架构，编 Theos tweak 是社区标准做法。
+>
+> 若连 ubuntu 都一直 pending/cancel（`billing/actions` 返回 404），那不是 runner 类型问题，
+> 而是**账号层面没真正分配 runner**，常见根因与退路：
+> 1. **账单验证**：新账号跑分钟数（含免费额度）常要求先绑有效支付方式验证身份
+>    （Settings → Billing and plans，绑卡不扣钱）；
+> 2. **self-hosted runner**：自己 Mac 上装 runner（Settings → Actions → Runners → New self-hosted runner），
+>    把 `runs-on: ubuntu-latest` 改成 `runs-on: self-hosted`，绕过 GitHub 分配；
+> 3. 升级 GitHub 套餐。
 
 步骤：
 1. 把整个 `ShakeBlocker` 目录推到一个 GitHub 仓库（main/master 分支）。
