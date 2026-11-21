@@ -101,8 +101,15 @@ make SCHEME=rootless package
 
 ### ☁️ 用 GitHub Actions 云端自动编译（推荐，本地 Windows 编不了 iOS DEB）
 工程已内置 [`.github/workflows/build.yml`](.github/workflows/build.yml)：
-在 **macos-14** runner 上自动装 Theos + iOS SDK + 新版 ldid，依次编两个 scheme，
+在 **macos-13** runner 上自动装 Theos + iOS SDK + 新版 ldid，依次编两个 scheme，
 上传 DEB 为 Artifacts；打 `v*` 标签时自动发 Release。
+
+> ⚠️ **runner 选择的坑（本小姐实测踩过）**：`macos-14`（Apple Silicon）属 10x 计费，
+> 免费账号没 macOS 分钟会在 **1 秒内秒取消**、job 连 step 都不跑。已改用 `macos-13`（Intel）。
+> 若 `macos-13` 仍长时间排队/取消，说明该账号确实没有 macOS 额度，两条退路：
+> 1. **self-hosted macOS runner**：在自己 Mac 上装 runner（仓库 Settings → Actions → Runners → New self-hosted runner），
+>    再把 workflow 的 `runs-on: macos-13` 改成 `runs-on: self-hosted`；
+> 2. 升级 GitHub 套餐获得 macOS 分钟。Debian/Linux runner 编不了 iOS DEB（缺 Xcode SDK + DER 签名）。
 
 步骤：
 1. 把整个 `ShakeBlocker` 目录推到一个 GitHub 仓库（main/master 分支）。
