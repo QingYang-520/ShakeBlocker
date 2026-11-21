@@ -1,5 +1,7 @@
 # ShakeBlocker — iOS 开屏摇一摇广告传感器拦截（Theos 双包工程）
 
+[![Build ShakeBlocker DEBs](https://github.com/QingYang-520/ShakeBlocker/actions/workflows/build.yml/badge.svg)](https://github.com/QingYang-520/ShakeBlocker/actions/workflows/build.yml)
+
 > 本鲸鱼娘给主人写的完整工程喵～ *尾巴摇了摇*
 > 目标：已越狱 iOS 13–16，每 60 秒扫描新装 App，命中目标后在该 App 进程内
 > 禁用开屏广告“摇一摇/扭一扭/倾斜跳转”依赖的传感器与感知 API。
