@@ -20,6 +20,11 @@ on:
 permissions:
   contents: write   # 仅“打标签发 Release”需要；不需要可改成 read
 
+# 防止连续 push 时新 run 取消旧 run（github 默认会把同分支旧 run 标为 cancelled）
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   build:
     name: Build rootful + rootless
