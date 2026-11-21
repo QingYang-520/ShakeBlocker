@@ -28,8 +28,10 @@ concurrency:
 jobs:
   build:
     name: Build rootful + rootless
-    # macos-14 = Apple Silicon，编译 arm64/arm64e 更顺手；如需 Intel 改成 macos-13
-    runs-on: macos-14
+    # ⚠️ macos-14 (Apple Silicon) 属于 10x 计费，免费账号无额度会秒取消。
+    # macos-13 (Intel) 在部分免费账号下可用；若仍被取消，说明该账号无 macOS 分钟，
+    # 需改用 self-hosted macOS runner（见 README）或升级 GitHub 套餐。
+    runs-on: macos-13
     timeout-minutes: 30
     # 注意：GitHub Actions 没有 runner.home 这个上下文！用 shell 的 $HOME 代替。
     env:
