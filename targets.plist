@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <!--
+    BundleIDs：来自主人提供的清单中“已给出明确 Bundle ID”的条目。
+    带 (待复核) 备注的 ID 沿用清单原值，建议真机核实脚本确认。
+    “待核实”的 9 个 App 不预知 ID，改由 DisplayNames 兜底匹配：
+    daemon 扫到 App 时读它自己的 Info.plist，显示名命中即建标志，
+    并把“显示名 -> 真实 Bundle ID”写进日志，方便后续补进本列表与 filter。
+  -->
+  <key>BundleIDs</key>
+  <array>
+    <string>com.douban.frodo</string>
+    <string>com.zhihu.ios</string>
+    <string>com.tencent.QQMusic</string>
+    <string>com.baidu.netdisk</string>
+    <string>com.baidu.BaiduMap</string>
+    <string>com.baidu.navi</string><!-- 待复核（百度导航） -->
+    <string>com.ximalaya.tinglian</string>
+    <string>com.meitu.meiyancamera</string><!-- 待复核（美颜相机） -->
+    <string>com.youku.YouKu</string>
+    <string>com.gotokeep.keep</string>
+    <string>com.sina.weibo</string>
+    <string>com.iqiyi.iqiyi</string><!-- 待复核（爱奇艺） -->
+    <string>com.tencent.live4iphone</string><!-- 待复核（腾讯视频） -->
+    <string>com.xiaojukeji.didi</string><!-- 待复核（滴滴出行） -->
+    <string>com.meitu.mtxx</string>
+    <string>com.cainiao.wireless</string><!-- 待复核（菜鸟） -->
+  </array>
+
+  <!-- 显示名兜底：覆盖“待核实”App，以及 App Store 名称与本地化名差异 -->
+  <key>DisplayNames</key>
+  <array>
+    <string>虎扑</string>
+    <string>七猫免费小说</string>
+    <string>七猫小说</string>
+    <string>超级课程表</string>
+    <string>醒图</string>
+    <string>哔哩哔哩</string>
+    <string>UC浏览器</string>
+    <string>矿工行动</string>
+    <string>天天台球</string>
+    <string>米读极速版</string>
+    <string>米读小说极速版</string>
+    <string>豆瓣</string>
+    <string>知乎</string>
+    <string>QQ音乐</string>
+    <string>百度网盘</string>
+    <string>百度地图</string>
+    <string>网易云音乐</string>
+    <string>喜马拉雅</string>
+    <string>优酷</string>
+    <string>Keep</string>
+    <string>微博</string>
+    <string>爱奇艺</string>
+    <string>腾讯视频</string>
+    <string>滴滴出行</string>
+    <string>美图秀秀</string>
+    <string>菜鸟</string>
+    <string>菜鸟裹裹</string>
+  </array>
+</dict>
+</plist>

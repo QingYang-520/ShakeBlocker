@@ -1,0 +1,23 @@
+#!/bin/sh
+# ============================================================
+# prerm — 卸载前：卸载 launchd 任务、清理 active 目录与日志
+# ============================================================
+set -e
+
+PREFIX=""
+if [ -d /var/jb ]; then PREFIX="/var/jb"; fi
+PLIST="$PREFIX/Library/LaunchDaemons/com.qingyang.shakeblocker.daemon.plist"
+
+OS=$(uname -r | cut -d. -f1)
+if [ -n "$PREFIX" ] || [ "$OS" -ge 21 ] 2>/dev/null; then
+    launchctl bootout system "$PLIST" 2>/dev/null || true
+else
+    launchctl unload "$PLIST" 2>/dev/null || true
+fi
+
+# 清理 active 目录 + known_bundles.plist（整目录一起端掉）
+rm -rf "$PREFIX/var/mobile/Library/ShakeBlocker" 2>/dev/null || true
+rm -f /var/log/shakeblocker.log /var/log/shakeblocker.err.log 2>/dev/null || true
+rm -f "$PREFIX/var/log/shakeblocker.log" "$PREFIX/var/log/shakeblocker.err.log" 2>/dev/null || true
+
+exit 0

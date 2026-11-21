@@ -1,0 +1,8 @@
+Package: com.qingyang.shakeblocker
+Name: ShakeBlocker
+Version: 1.0.0
+Section: Tweaks
+Maintainer: QingYang <admin@qingyang.religongsi.com>
+Description: Block shake/tilt-to-redirect splash ads by gating sensor APIs. Two builds share this identifier: rootful (iOS 13-14, mobilesubstrate) and rootless (iOS 15-16, ellekit). APT picks by architecture.
+Depends: ellekit
+Architecture: iphoneos-arm64

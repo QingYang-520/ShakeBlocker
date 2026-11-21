@@ -1,0 +1,42 @@
+#!/bin/sh
+# ============================================================
+# postinst — 安装后：修正 rootless 路径、加载 launchd 任务、备好 active 目录
+# ============================================================
+set -e
+
+# 通过 /var/jb 是否存在判断 rootless（与 tweak/daemon 的 ROOT_PATH_NS 判断一致）
+PREFIX=""
+if [ -d /var/jb ]; then PREFIX="/var/jb"; fi
+
+PLIST="$PREFIX/Library/LaunchDaemons/com.qingyang.shakeblocker.daemon.plist"
+
+# rootless 下 plist 内的字符串路径 Theos 不会自动改写，手动补前缀
+if [ -n "$PREFIX" ]; then
+    # macOS(BSD) sed 用 -i ''，GNU sed 用 -i；用 || 兜底
+    sed -i '' "s|/usr/bin/shakeblockerd|$PREFIX/usr/bin/shakeblockerd|g" "$PLIST" 2>/dev/null \
+      || sed -i "s|/usr/bin/shakeblockerd|$PREFIX/usr/bin/shakeblockerd|g" "$PLIST"
+    sed -i '' "s|/var/log/|$PREFIX/var/log/|g" "$PLIST" 2>/dev/null \
+      || sed -i "s|/var/log/|$PREFIX/var/log/|g" "$PLIST"
+fi
+
+chown root:wheel "$PLIST"
+chmod 644 "$PLIST"
+
+# 按环境选 launchctl 用法：
+#   rootless(iOS15-16, Darwin 21+) -> launchctl bootstrap system
+#   rootful (iOS13-14)             -> launchctl load
+OS=$(uname -r | cut -d. -f1)
+if [ -n "$PREFIX" ] || [ "$OS" -ge 21 ] 2>/dev/null; then
+    launchctl bootout system "$PLIST" 2>/dev/null || true
+    launchctl bootstrap system "$PLIST" 2>/dev/null || launchctl load "$PLIST" 2>/dev/null || true
+else
+    launchctl unload "$PLIST" 2>/dev/null || true
+    launchctl load "$PLIST" 2>/dev/null || true
+fi
+
+# 备好数据目录（路径与 SBPaths.h 的 ROOT_PATH_NS 规则一致）
+mkdir -p "$PREFIX/var/mobile/Library/ShakeBlocker/active" 2>/dev/null || true
+chown -R mobile:mobile "$PREFIX/var/mobile/Library/ShakeBlocker" 2>/dev/null || true
+chmod 700 "$PREFIX/var/mobile/Library/ShakeBlocker" 2>/dev/null || true
+
+exit 0

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <!--
+    filter 方案取舍（详见 README）：
+    本工程采用“预置目标 Bundle ID 白名单 + 运行时门控”。
+    - 白名单保证 dylib 只注入目标 App，不碰 SpringBoard / 系统守护进程；
+    - 门控保证即使被注入，非目标也全部 %orig 透传，零副作用。
+    新装目标 App 只要 ID 在本列表里就会被注入（与安装时间无关），
+    daemon 在 60 秒内建标志，dylib 启动时读标志启用 Hook —— 三环闭环。
+    待核实的 App 需先用 scripts/verify_bundle_ids.sh 拿到真 ID 再加进来；
+    在此之前它们由 daemon 的显示名兜底负责“发现并记录”，但不会被注入，
+    这是不编造 Bundle ID 前提下的诚实结果。
+  -->
+  <key>Filter</key>
+  <dict>
+    <key>Bundles</key>
+    <array>
+      <string>com.douban.frodo</string>
+      <string>com.zhihu.ios</string>
+      <string>com.tencent.QQMusic</string>
+      <string>com.baidu.netdisk</string>
+      <string>com.baidu.BaiduMap</string>
+      <string>com.baidu.navi</string>
+      <string>com.ximalaya.tinglian</string>
+      <string>com.meitu.meiyancamera</string>
+      <string>com.youku.YouKu</string>
+      <string>com.gotokeep.keep</string>
+      <string>com.sina.weibo</string>
+      <string>com.iqiyi.iqiyi</string>
+      <string>com.tencent.live4iphone</string>
+      <string>com.xiaojukeji.didi</string>
+      <string>com.meitu.mtxx</string>
+      <string>com.cainiao.wireless</string>
+    </array>
+  </dict>
+</dict>
+</plist>

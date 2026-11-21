@@ -1,0 +1,7 @@
+# 编译产物由 CI 生成，不进仓库
+packages/*.deb
+artifacts/
+.theos/
+obj/
+*.o
+.DS_Store

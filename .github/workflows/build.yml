@@ -1,0 +1,97 @@
+name: Build ShakeBlocker DEBs
+
+# ============================================================
+# 在 GitHub Actions 的 macOS runner 上自动编译两个 DEB：
+#   - rootful  (iOS 13-14, iphoneos-arm,   mobilesubstrate)
+#   - rootless (iOS 15-16, iphoneos-arm64, ellekit)
+# 两个包共用 Package Identifier，APT 按设备架构自动选包。
+#
+# 触发：push 到 main/master、打 v* 标签、PR、手动 workflow_dispatch
+# 产物：Actions 页面 Artifacts 下载；打标签时自动发 Release
+# ============================================================
+
+on:
+  push:
+    branches: [ main, master ]
+    tags: [ 'v*' ]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write   # 仅“打标签发 Release”需要；不需要可改成 read
+
+jobs:
+  build:
+    name: Build rootful + rootless
+    # macos-14 = Apple Silicon，编译 arm64/arm64e 更顺手；如需 Intel 改成 macos-13
+    runs-on: macos-14
+    timeout-minutes: 30
+    env:
+      THEOS: ${{ runner.home }}/theos
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Show toolchain
+        run: |
+          echo "Xcode: $(xcode-select -p)"
+          clang --version | head -1
+
+      - name: Install Theos (recursive)
+        run: |
+          git clone --recursive --depth 1 https://github.com/theos/theos.git "$THEOS"
+          echo "THEOS=$THEOS" >> "$GITHUB_ENV"
+
+      - name: Install iOS SDK
+        run: |
+          # theos/sdks 内含多套 iPhoneOS*.sdk。若该源失效，把下面 URL 换成
+          # 你信任的 SDK 仓库（如 nicolas73/iOS-12.2-SDK 等），SDK 目录名须形如 iPhoneOS*.sdk
+          git clone --depth 1 https://github.com/theos/sdks.git "$THEOS/sdks" || true
+          # 兼容“仓库里放压缩包”的情况：见到 tar 包就解压到 sdks/
+          find "$THEOS/sdks" -maxdepth 2 -type f \( -name '*.tar.gz' -o -name '*.tar.xz' -o -name '*.tgz' \) \
+            | while read -r arc; do tar -xf "$arc" -C "$THEOS/sdks" 2>/dev/null || true; done
+          echo "---- installed SDKs ----"
+          ls -d "$THEOS/sdks"/*.sdk 2>/dev/null || true
+
+      - name: Install build deps (dpkg-deb, modern ldid)
+        run: |
+          # Theos 自带 dpkg-deb，但 brew 版兜底更稳
+          brew install dpkg || true
+          # rootless 需要支持 DER entitlements 的新版 ldid
+          brew install ldid || true
+          BREW_LDID="$(brew --prefix 2>/dev/null)/bin/ldid"
+          [ -x "$BREW_LDID" ] && cp -f "$BREW_LDID" "$THEOS/bin/ldid"
+          echo "ldid: $("$THEOS/bin/ldid" -v 2>&1 | head -2)"
+
+      - name: Build rootful (iOS 13-14, iphoneos-arm)
+        run: |
+          make clean
+          make package
+
+      - name: Build rootless (iOS 15-16, iphoneos-arm64)
+        run: |
+          make clean            # 必须：清掉上一 scheme 的 staging
+          make SCHEME=rootless package
+
+      - name: Collect DEBs
+        run: |
+          mkdir -p artifacts
+          find "$GITHUB_WORKSPACE/packages" -name '*.deb' -type f -exec cp -v {} artifacts/ \;
+          echo "---- artifacts ----"
+          ls -lh artifacts
+          test -n "$(ls artifacts/*.deb 2>/dev/null)" || { echo "No DEB produced!"; exit 1; }
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ShakeBlocker-DEBs
+          path: artifacts/*.deb
+          if-no-files-found: error
+
+      - name: Publish GitHub Release (tags only)
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/*.deb
+          generate_release_notes: true
