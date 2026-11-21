@@ -101,15 +101,18 @@ make SCHEME=rootless package
 
 ### ☁️ 用 GitHub Actions 云端自动编译（推荐，本地 Windows 编不了 iOS DEB）
 工程已内置 [`.github/workflows/build.yml`](.github/workflows/build.yml)：
-在 **macos-13** runner 上自动装 Theos + iOS SDK + 新版 ldid，依次编两个 scheme，
-上传 DEB 为 Artifacts；打 `v*` 标签时自动发 Release。
+用 **免费 `ubuntu-latest`** runner + 社区 [`Randomblock1/theos-action@v1`](https://github.com/Randomblock1/theos-action)
+自动装 Theos + Linux toolchain + iOS SDK + ldid，依次编两个 scheme，
+上传 DEB 为 Artifacts；打 `v*` 标签时自动发 Release。Linux 编 Theos tweak 是社区标准做法，不需要 Mac。
 
 > ⚠️ **runner 选择的坑（本小姐实测踩过）**：`macos-14`（Apple Silicon）属 10x 计费，
-> 免费账号没 macOS 分钟会在 **1 秒内秒取消**、job 连 step 都不跑。已改用 `macos-13`（Intel）。
-> 若 `macos-13` 仍长时间排队/取消，说明该账号确实没有 macOS 额度，两条退路：
-> 1. **self-hosted macOS runner**：在自己 Mac 上装 runner（仓库 Settings → Actions → Runners → New self-hosted runner），
->    再把 workflow 的 `runs-on: macos-13` 改成 `runs-on: self-hosted`；
-> 2. 升级 GitHub 套餐获得 macOS 分钟。Debian/Linux runner 编不了 iOS DEB（缺 Xcode SDK + DER 签名）。
+> 免费账号没 macOS 分钟会在 **1 秒内秒取消**（job 连 step 都不跑、runner_id=0）；
+> `macos-13` 则长时间 queued 拿不到 runner。所以最终改用 `ubuntu-latest` + theos-action，
+> 免费、额度充足。若 ubuntu 也无故 pending/cancel（`billing/actions` 返回 404），
+> 说明该账号/组织层面限制了 Actions，退路：
+> 1. 在自己 Mac 上装 **self-hosted runner**（Settings → Actions → Runners → New self-hosted runner），
+>    把 `runs-on: ubuntu-latest` 改成 `runs-on: self-hosted`；
+> 2. 升级 GitHub 套餐。
 
 步骤：
 1. 把整个 `ShakeBlocker` 目录推到一个 GitHub 仓库（main/master 分支）。
